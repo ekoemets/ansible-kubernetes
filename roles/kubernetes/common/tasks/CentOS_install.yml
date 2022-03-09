@@ -1,0 +1,47 @@
+- name: Add libcontainers repository
+  yum_repository:
+    name: "kubernetes"
+    description: Kubernetes
+    baseurl: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-$basearch"
+    gpgcheck: yes
+    gpgkey: "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+    exclude:
+      - kubelet
+      - kubeadm
+      - kubectl
+    enabled: yes
+
+- name: Set SELinux in permissive mode
+  ansible.builtin.shell: setenforce 0
+
+- name: Change SELinux to permissive mode
+  ansible.posix.selinux:
+    policy: targeted
+    state: permissive
+
+- name: Ensure SELinux is set to permissive mode
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: "^SELINUX="
+    line: SELINUX=permissive
+
+# TODO: Configure firewall instead of disabling
+- name: Disable firewall for testing
+  ansible.builtin.systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: Install tc
+  ansible.builtin.dnf:
+    name: iproute-tc
+    state: present
+
+- name: Install kubelet and kubeadm
+  ansible.builtin.dnf:
+    name:
+      - "kubelet-{{ kubeadm_version }}"
+      - "kubeadm-{{ kubeadm_version }}"
+      - "kubectl-{{ kubeadm_version }}"
+    state: present
+    disable_excludes: kubernetes

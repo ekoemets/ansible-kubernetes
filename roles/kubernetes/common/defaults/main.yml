@@ -1,0 +1,16 @@
+# kubeadm_version:
+
+kubernetes_kernel_modules:
+  - br_netfilter
+
+kubernetes_sysctl_variables:
+  - name: net.bridge.bridge-nf-call-ip6tables
+    value: "1"
+  - name: net.bridge.bridge-nf-call-iptables
+    value: "1"
+
+kubernetes_bin_dir: /usr/bin
+kubernetes_conf_dir: /etc/kubernetes
+
+kubectl: "{{ kubernetes_bin_dir }}/kubectl --kubeconfig {{ kubernetes_conf_dir }}/admin.conf"
+kubeadm: "{{ kubernetes_bin_dir }}/kubeadm"

@@ -1,0 +1,10 @@
+mail.example.com
+
+[k8s_control_plane]
+foo.example.com
+bar.example.com
+
+[k8s_node]
+one.example.com
+two.example.com
+three.example.com

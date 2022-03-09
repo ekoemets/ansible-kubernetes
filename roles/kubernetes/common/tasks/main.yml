@@ -1,0 +1,41 @@
+---
+- name: Create conf file to load required kernel modules on boot
+  template:
+    src: "kubernetes_kernel_modules.conf.j2"
+    dest: "/etc/modules-load.d/kubernetes.conf"
+
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ kubernetes_kernel_modules }}"
+
+- name: Set up required sysctl.d params
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: "/etc/sysctl.d/kubernetes.conf"
+    reload: yes
+  with_items: "{{ kubernetes_sysctl_variables }}"
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+  change: false
+
+- name: Remove swap entries from fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^\s]+\s+[^\s]+\s+swap\s+.*)$'
+    replace: '# \1'
+
+- name: Install packages (CentOS)
+  include_tasks: CentOS_install.yml
+  when: ansible_distribution == 'CentOS'
+
+- name: Start and enable kubelet
+  systemd:
+    name: kubelet
+    state: started
+    enabled: yes
+    daemon_reload: yes

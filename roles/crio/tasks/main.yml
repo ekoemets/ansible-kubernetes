@@ -1,0 +1,30 @@
+---
+- name: Create conf file to load required kernel modules on boot
+  ansible.builtin.template:
+    src: "crio_kernel_modules.conf.j2"
+    dest: "/etc/modules-load.d/crio.conf"
+
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ crio_kernel_modules }}"
+
+- name: Set up required sysctl.d params
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: "/etc/sysctl.d/99-crio.conf"
+    reload: yes
+  with_items: "{{ crio_sysctl_variables }}"
+
+- name: Install CRI-O (CentOS)
+  include_tasks: CentOS_install.yml
+  when: ansible_distribution == 'CentOS'
+
+- name: Start and enable CRI-O
+  ansible.builtin.systemd:
+    name: "crio"
+    state: started
+    enabled: yes
+    daemon_reload: yes

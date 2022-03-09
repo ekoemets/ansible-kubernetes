@@ -1,0 +1,26 @@
+- name: Set distribution version
+  set_fact:
+    centos_dist_name: CentOS_{{ ansible_distribution_major_version }}
+
+- name: Add libcontainers repository
+  yum_repository:
+    name: "devel:kubic:libcontainers:stable"
+    description: "Libcontainers packages(stable)"
+    baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ centos_dist_name }}/
+    gpgcheck: yes
+    gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ centos_dist_name }}/repodata/repomd.xml.key
+    enabled: yes
+
+- name: Add CRI-O repository
+  yum_repository:
+    name: "devel:kubic:libcontainers:stable:cri-o"
+    description: "CRI-O"
+    baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ centos_dist_name }}/
+    gpgcheck: yes
+    gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ centos_dist_name }}/repodata/repomd.xml.key
+    enabled: yes
+
+- name: Install CRI-O
+  yum:
+    name: "cri-o"
+    state: present
