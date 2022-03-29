@@ -1,0 +1,22 @@
+# Values that have to be configured
+k8s_version: ""
+k8s_install_kubectl: False
+k8s_control_first_node: ""
+k8s_control_plane_endpoint: ""
+
+# Values for which default is set, but can be modified
+
+k8s_bin_dir: /usr/bin
+k8s_conf_dir: /etc/kubernetes
+
+kubectl: "{{ k8s_bin_dir }}/kubectl --kubeconfig {{ k8s_conf_dir }}/admin.conf"
+kubeadm: "{{ k8s_bin_dir }}/kubeadm"
+
+k8s_kernel_modules:
+  - br_netfilter
+
+k8s_sysctl_variables:
+  - name: net.bridge.bridge-nf-call-ip6tables
+    value: "1"
+  - name: net.bridge.bridge-nf-call-iptables
+    value: "1"

@@ -1,0 +1,19 @@
+---
+- name: Create kubeadm join token
+  shell: >
+    {{ kubeadm }} token create --print-join-command
+  register: token_create_output
+  delegate_to: "{{ k8s_control_first_node }}"
+  run_once: true
+
+- name: Parse options for joining worker node
+  set_fact:
+    token: "{{ token_create_output.stdout | regex_search('--token (.*?)(\\s|$)', '\\1') | first}}"
+    discovery_token_ca_cert_hash: "{{ token_create_output.stdout | regex_search('--discovery-token-ca-cert-hash (.*?)(\\s|$)', '\\1') | first }}"
+
+- name: Join control plane node to cluster
+  shell: >
+    {{ kubeadm }} join {{ k8s_control_plane_endpoint }}
+    --apiserver-advertise-address {{ hostvars[inventory_hostname].ansible_host }}
+    --token {{ token }}
+    --discovery-token-ca-cert-hash {{ discovery_token_ca_cert_hash }}

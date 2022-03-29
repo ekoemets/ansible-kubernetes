@@ -1,0 +1,10 @@
+---
+- name: Check if node is joined
+  stat:
+    path: "{{ k8s_conf_dir }}/kubelet.conf"
+  register: kubelet_conf
+
+- name: Include tasks for joining worker node
+  include_tasks: join.yaml
+  when: not kubelet_conf.stat.exists
+# TODO: Add checks that worker node is healthy

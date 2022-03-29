@@ -1,0 +1,37 @@
+---
+- name: Set SELinux in permissive mode
+  ansible.builtin.shell: setenforce 0
+
+- name: Change SELinux to permissive mode
+  ansible.posix.selinux:
+    policy: targeted
+    state: permissive
+
+- name: Ensure SELinux is set to permissive mode
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: "^SELINUX="
+    line: SELINUX=permissive
+
+- name: Disable firewall for testing
+  ansible.builtin.systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: Install haproxy
+  dnf:
+    name: haproxy
+    state: latest
+
+- name: Configure haproxy
+  template:
+    src: "{{ haproxy_template }}"
+    dest: "/etc/haproxy/haproxy.cfg"
+
+- name: Start and enable haproxy
+  systemd:
+    name: haproxy
+    state: restarted
+    enabled: yes
+    daemon_reload: yes

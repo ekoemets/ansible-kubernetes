@@ -1,0 +1,23 @@
+---
+- name: Assert that k8s_control_first_node is defined
+  assert:
+    that: k8s_control_first_node is defined
+    fail_msg: Variable 'k8s_control_first_node' has to be defined
+    quiet: yes
+
+- name: Check if admin.conf exists
+  stat:
+    path: "{{ k8s_conf_dir }}/admin.conf"
+  register: k8s_control_admin_conf
+
+- name: Initialize control plane
+  block:
+    - name: Include tasks for initializing control plane on first node
+      include_tasks: init.yaml
+      when: inventory_hostname == k8s_control_first_node
+
+    - name: Include tasks for joining addition control plane node
+      include_tasks: join.yaml
+      when: inventory_hostname != k8s_control_first_node
+  when: not k8s_control_admin_conf.stat.exists
+# TODO: Add checks that control plane node is healthy

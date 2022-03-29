@@ -18,9 +18,8 @@
     reload: yes
   with_items: "{{ crio_sysctl_variables }}"
 
-- name: Install CRI-O (CentOS)
-  include_tasks: CentOS_install.yml
-  when: ansible_distribution == 'CentOS'
+- name: Install CRI-O
+  include_tasks: install.yaml
 
 - name: Start and enable CRI-O
   ansible.builtin.systemd:

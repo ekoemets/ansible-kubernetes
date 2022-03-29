@@ -1,0 +1,54 @@
+---
+- name: Assert that Calico version is defined
+  assert:
+    that: calico_version is defined
+    fail_msg: Variable 'calico_version' has to be defined
+    quiet: yes
+
+- name: Get Calico Deployment image
+  shell: >
+    {{ kubectl }} -n kube-system get deployment/calico-kube-controllers 
+    --ignore-not-found
+    -o jsonpath="{$.spec.template.spec.containers[0].image}"
+  register: calico_deployment
+
+- name: Get Calico DaemonSet image
+  shell: >
+    {{ kubectl }} -n kube-system get daemonset/calico-node
+    --ignore-not-found
+    -o jsonpath="{$.spec.template.spec.containers[0].image}"
+  register: calico_daemon_set
+
+- name: Determine Calico versions
+  set_fact:
+    calico_deployment_version: "{{ calico_deployment.stdout | regex_replace('.*?:')}}"
+    calico_daemon_set_version: "{{ calico_daemon_set.stdout | regex_replace('.*?:')}}"
+
+- name: Print current Calico resources versions
+  debug:
+    msg:
+      - "calico-kube-conrollers={{ calico_deployment_version }}"
+      - "calico-node={{ calico_daemon_set_version }}"
+
+- name: Download and apply Calico manifest
+  block:
+    - name: Set Calico manifest location
+      set_fact:
+        calico_manifest_file: /tmp/calico.yaml
+
+    - name: Download Calico manifest
+      get_url:
+        url: https://projectcalico.docs.tigera.io/archive/{{ calico_version }}/manifests/calico.yaml
+        dest: "{{ calico_manifest_file }}"
+        mode: "0440"
+
+    - name: Apply Calico manifest
+      shell: >
+        {{ kubectl }} apply -f {{ calico_manifest_file }}
+
+    - name: Delete manifest file
+      file:
+        path: "{{ calico_manifest_file }}"
+        state: absent
+  when: (calico_deployment_version != calico_version) or (calico_daemon_set_version != calico_version)
+# TODO: Add checks to see if Calico is working correctly

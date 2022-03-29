@@ -1,0 +1,12 @@
+---
+- name: Initalize cluster with kubeadm
+  shell: >
+    {{ kubeadm }} init 
+    --control-plane-endpoint {{ k8s_control_plane_endpoint }}
+    --apiserver-advertise-address {{ hostvars[inventory_hostname].ansible_host }}
+    {{ k8s_control_init_extra_options }}
+  register: kubeadm_init_result
+
+- name: Debug init result
+  debug:
+    var: kubeadm_init_result

@@ -1,10 +1,10 @@
-mail.example.com
+[load_balancer]
+haproxy1 
 
 [k8s_control_plane]
-foo.example.com
-bar.example.com
+master1
+master2
 
 [k8s_node]
-one.example.com
-two.example.com
-three.example.com
+node1
+node2

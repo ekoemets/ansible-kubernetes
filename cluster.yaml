@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  tasks:
+    - ansible.builtin.add_host:
+        name: "{{ k8s_control_first_node }}"
+        groups: k8s_control_init
+
+    - ansible.builtin.add_host:
+        name: "{{ item }}"
+        group: k8s_control_join
+      with_items: "{{ groups['k8s_control_plane'] | reject('==', k8s_control_first_node) | list }}"
+
+- hosts: "k8s_control_init"
+  become: true
+  roles:
+    - role: crio
+    - role: kubernetes/node/common
+    - role: kubernetes/node/control
+    - role: kubernetes/calico
+
+- hosts: k8s_control_join
+  become: true
+  serial: 1
+  roles:
+    - role: crio
+    - role: kubernetes/node/common
+    - role: kubernetes/node/control
+
+- hosts: k8s_node
+  become: true
+  serial: 1
+  roles:
+    - role: crio
+    - role: kubernetes/node/common
+    - role: kubernetes/node/worker

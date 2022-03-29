@@ -8,7 +8,7 @@
   community.general.modprobe:
     name: "{{ item }}"
     state: present
-  with_items: "{{ kubernetes_kernel_modules }}"
+  with_items: "{{ k8s_kernel_modules }}"
 
 - name: Set up required sysctl.d params
   ansible.posix.sysctl:
@@ -16,12 +16,11 @@
     value: "{{ item.value }}"
     sysctl_file: "/etc/sysctl.d/kubernetes.conf"
     reload: yes
-  with_items: "{{ kubernetes_sysctl_variables }}"
+  with_items: "{{ k8s_sysctl_variables }}"
 
 - name: Disable swap
   command: swapoff -a
   when: ansible_swaptotal_mb > 0
-  change: false
 
 - name: Remove swap entries from fstab
   replace:
@@ -29,9 +28,8 @@
     regexp: '^([^\s]+\s+[^\s]+\s+swap\s+.*)$'
     replace: '# \1'
 
-- name: Install packages (CentOS)
-  include_tasks: CentOS_install.yml
-  when: ansible_distribution == 'CentOS'
+- name: Install packages
+  include_tasks: install.yaml
 
 - name: Start and enable kubelet
   systemd:

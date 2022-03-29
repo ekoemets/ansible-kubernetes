@@ -1,3 +1,4 @@
+---
 - name: Add libcontainers repository
   yum_repository:
     name: "kubernetes"
@@ -40,8 +41,15 @@
 - name: Install kubelet and kubeadm
   ansible.builtin.dnf:
     name:
-      - "kubelet-{{ kubeadm_version }}"
-      - "kubeadm-{{ kubeadm_version }}"
-      - "kubectl-{{ kubeadm_version }}"
+      - "kubelet-{{ k8s_version }}"
+      - "kubeadm-{{ k8s_version }}"
     state: present
     disable_excludes: kubernetes
+
+- name: Install kubectl
+  ansible.builtin.dnf:
+    name:
+      - "kubectl-{{ k8s_version }}"
+    state: present
+    disable_excludes: kubernetes
+  when: k8s_install_kubectl == True
