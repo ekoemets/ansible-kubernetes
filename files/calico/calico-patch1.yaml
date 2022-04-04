@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    group: calico-test
+  name: calico-node
+  namespace: kube-system

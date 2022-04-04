@@ -18,6 +18,7 @@
     - role: kubernetes/node/common
     - role: kubernetes/node/control
     - role: kubernetes/calico
+    - role: kubernetes/nginx
 
 - hosts: k8s_control_join
   become: true

@@ -1,0 +1,9 @@
+resources:
+- calico.yaml
+
+{% if calico_merge_patches is defined %}
+patchesStrategicMerge:
+{% for item in calico_merge_patches %}
+  - {{ item.name }}.yaml
+{% endfor %}
+{% endif %}

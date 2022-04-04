@@ -32,29 +32,8 @@
       - "calico-kube-conrollers={{ calico_deployment_version }}"
       - "calico-node={{ calico_daemon_set_version }}"
 
-- name: Download and apply Calico manifest
-  block:
-    - name: Set Calico manifest location
-      ansible.builtin.set_fact:
-        calico_manifest_file: /tmp/calico.yaml
-
-    - name: Download Calico manifest
-      ansible.builtin.get_url:
-        url: https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml
-        dest: "{{ calico_manifest_file }}"
-        mode: "0440"
-
-    - name: Apply Calico manifest
-      ansible.builtin.shell: >
-        {{ kubectl }} apply -f {{ calico_manifest_file }}
-      changed_when: false
-
-    - name: Delete manifest file
-      ansible.builtin.file:
-        path: "{{ calico_manifest_file }}"
-        state: absent
-
-  when: (calico_deployment_version != calico_version) or (calico_daemon_set_version != calico_version)
+- name: Include install tasks
+  ansible.builtin.include_tasks: install.yaml
 
 - name: Check Deployment calico-kube-controllers rollout status
   ansible.builtin.shell: >

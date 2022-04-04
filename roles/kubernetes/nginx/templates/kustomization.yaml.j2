@@ -1,0 +1,9 @@
+resources:
+- nginx.yaml
+
+{% if nginx_merge_patches is defined %}
+patchesStrategicMerge:
+{% for item in nginx_merge_patches %}
+  - {{ item.name }}.yaml
+{% endfor %}
+{% endif %}

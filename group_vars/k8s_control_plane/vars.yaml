@@ -1,9 +1,10 @@
-# Install kubectl for control plane nodes
-k8s_install_kubectl: true
+calico_merge_patches:
+  - name: "calico-patch1"
+    path: "files/calico/calico-patch1.yaml"
 
-# Kustomize configuration
-k8s_install_kustomize: true
-k8s_kustomize_version: "4.5.4"
+nginx_merge_patches:
+  - name: "nginx-patch1"
+    path: "files/nginx/nginx-patch1.yaml"
 
 k8s_control_static_manifest_patches:
   - name: "kube-apiserver01+merge.yaml"  # target[suffix][+patchtype].extension

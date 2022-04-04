@@ -1,1 +1,5 @@
-haproxy_template: ""
+haproxy_template: "templates/haproxy-default.cfg.j2"
+haproxy_backend_nodes:
+#  - name: "display"
+#    address: "address"
+#    port: "port"

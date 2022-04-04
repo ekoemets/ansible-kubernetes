@@ -1,0 +1,25 @@
+---
+- name: Get deployed Nginx Deployment image
+  ansible.builtin.shell: >
+    {{ kubectl }}
+    -n ingress-nginx get
+    --ignore-not-found
+    -o jsonpath='{$.spec.template.spec.containers[0].image}'
+    deployment/ingress-nginx-controller
+  changed_when: false
+  register: nginx_deployment
+
+- name: Determine Nginx version
+  ansible.builtin.set_fact:
+    nginx_deployment_version: "{{ nginx_deployment.stdout | regex_replace('^.*v([0-9\\.]+)@.*', '\\1') }}"
+
+- name: Include install tasks
+  ansible.builtin.include_tasks: install.yaml
+
+- name: Wait for nginx controller to be ready
+  ansible.builtin.shell: >
+    {{ kubectl }} wait --namespace ingress-nginx
+    --for=condition=ready pod
+    --selector=app.kubernetes.io/component=controller
+    --timeout=120s
+  changed_when: false

@@ -1,8 +1,7 @@
 - hosts: load_balancer
   become: true
   vars:
-    haproxy_template: templates/haproxy/haproxy.cfg.j2
-    kubernetes_control_nodes:
+    haproxy_backend_nodes:
       - name: master1
         address: "192.168.56.11"
         port: "6443"

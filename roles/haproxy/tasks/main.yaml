@@ -4,15 +4,17 @@
     name: haproxy
     state: present
 
-- name: Configure haproxy
-  ansible.builtin.template:
-    src: "{{ haproxy_template }}"
-    dest: "/etc/haproxy/haproxy.cfg"
-    mode: "0644"
-
 - name: Start and enable haproxy
   ansible.builtin.systemd:
     name: haproxy
     state: started
     enabled: true
     daemon_reload: true
+
+- name: Configure haproxy
+  ansible.builtin.template:
+    src: "{{ haproxy_template }}"
+    dest: "/etc/haproxy/haproxy.cfg"
+    mode: "0644"
+  notify:
+    - restart haproxy

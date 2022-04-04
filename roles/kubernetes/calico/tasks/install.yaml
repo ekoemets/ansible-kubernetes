@@ -1,0 +1,40 @@
+---
+- name: Set calico manifest directory
+  ansible.builtin.set_fact:
+    calico_manifest_dir: "{{ k8s_conf_dir }}/applications/calico"
+
+- name: Create manifest directory for calico
+  ansible.builtin.file:
+    path: "{{ calico_manifest_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Download calico manifest
+  ansible.builtin.get_url:
+    url: https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml
+    dest: "{{ calico_manifest_dir }}/calico.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy patches for manifest
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ calico_manifest_dir }}/{{ item.name }}.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items: "{{ calico_merge_patches }}"
+  when: calico_merge_patches is defined
+
+- name: Create kustomization file
+  ansible.builtin.template:
+    src: "kustomization.yaml.j2"
+    dest: "{{ calico_manifest_dir }}/kustomization.yaml"
+
+- name: Apply calico manifest
+  ansible.builtin.shell: >
+    {{ kubectl }} apply -k {{ calico_manifest_dir }}
+  changed_when: false

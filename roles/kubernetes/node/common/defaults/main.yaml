@@ -1,6 +1,5 @@
 # Values that have to be configured
 k8s_version: ""
-k8s_install_kubectl: false
 
 k8s_control_first_node: ""
 k8s_control_plane_endpoint: ""
