@@ -1,0 +1,47 @@
+---
+- name: Set facts for patching static manifests
+  ansible.builtin.set_fact:
+    k8s_manifest_patch_dir: "{{ k8s_conf_dir }}/manifest_patch"
+    k8s_manifest_patch_files: "{{ k8s_control_static_manifest_patches | map(attribute='name') }}"
+
+- name: Create directory for static manifest patches
+  ansible.builtin.file:
+    path: "{{ k8s_manifest_patch_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Capture files inside directory
+  ansible.builtin.shell: >
+    ls -1 {{ k8s_manifest_patch_dir }}
+  register: current_manifest_patch_files
+  changed_when: false
+
+- name: Remove patches that are not listed
+  ansible.builtin.file:
+    path: "{{ k8s_manifest_patch_dir }}/{{ item }}"
+    state: absent
+  with_items: "{{ current_manifest_patch_files.stdout_lines }}"
+  when: >
+    item not in k8s_manifest_patch_files
+  register: patches_delete
+
+- name: Ensure wanted patches exist on node
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ k8s_manifest_patch_dir }}/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ k8s_control_static_manifest_patches }}"
+  register: patches_update
+
+- name: Update static manifests files
+  ansible.builtin.shell: >
+    {{ kubeadm }} join phase control-plane-prepare control-plane
+    --control-plane
+    --apiserver-advertise-address {{ ansible_facts[k8s_ethernet_interface]['ipv4']['address'] }}
+    --patches {{ k8s_manifest_patch_dir }}
+  changed_when: false
+  when: patches_delete.changed or patches_update.changed

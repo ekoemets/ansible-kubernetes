@@ -1,6 +1,5 @@
-crio_version: "1.23"
-k8s_version: "1.23*"
-k8s_control_plane_endpoint: "192.168.56.9:6443"
-k8s_control_first_node: "master1"
+centos_selinux_mode: "permissive"
+centos_firewall_enabled: false
+centos_swap_enabled: false
 
-calico_version: "v3.22"
+k8s_control_first_node: "master1"

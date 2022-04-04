@@ -1,10 +1,16 @@
 [load_balancer]
-haproxy1 
+haproxy1
+
+[k8s_cluster]
+master1
+master2
+worker1
+worker2
 
 [k8s_control_plane]
 master1
 master2
 
 [k8s_node]
-node1
-node2
+worker1
+worker2

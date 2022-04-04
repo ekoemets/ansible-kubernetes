@@ -1,50 +1,37 @@
 ---
 - name: Add libcontainers repository
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: "kubernetes"
     description: Kubernetes
     baseurl: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-$basearch"
-    gpgcheck: yes
+    gpgcheck: true
     gpgkey: "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
     exclude:
       - kubelet
       - kubeadm
       - kubectl
-    enabled: yes
-
-- name: Set SELinux in permissive mode
-  ansible.builtin.shell: setenforce 0
-
-- name: Change SELinux to permissive mode
-  ansible.posix.selinux:
-    policy: targeted
-    state: permissive
-
-- name: Ensure SELinux is set to permissive mode
-  ansible.builtin.lineinfile:
-    path: /etc/selinux/config
-    regexp: "^SELINUX="
-    line: SELINUX=permissive
-
-# TODO: Configure firewall instead of disabling
-- name: Disable firewall for testing
-  ansible.builtin.systemd:
-    name: firewalld
-    state: stopped
-    enabled: no
+    enabled: true
 
 - name: Install tc
   ansible.builtin.dnf:
     name: iproute-tc
     state: present
 
-- name: Install kubelet and kubeadm
+- name: Install kubeadm
   ansible.builtin.dnf:
     name:
-      - "kubelet-{{ k8s_version }}"
       - "kubeadm-{{ k8s_version }}"
     state: present
     disable_excludes: kubernetes
+  when: "'kubeadm' not in ansible_facts.packages"
+
+- name: Install kubelet
+  ansible.builtin.dnf:
+    name:
+      - "kubelet-{{ k8s_version }}"
+    state: present
+    disable_excludes: kubernetes
+  when: "'kubelet' not in ansible_facts.packages"
 
 - name: Install kubectl
   ansible.builtin.dnf:
@@ -52,4 +39,19 @@
       - "kubectl-{{ k8s_version }}"
     state: present
     disable_excludes: kubernetes
-  when: k8s_install_kubectl == True
+  when: "'kubectl' not in ansible_facts.packages"
+
+- name: Modify kubelet configuration
+  ansible.builtin.lineinfile:
+    path: "/etc/sysconfig/kubelet"
+    line: "KUBELET_EXTRA_ARGS=--node-ip={{ ansible_facts[k8s_ethernet_interface]['ipv4']['address'] }}"
+    regexp: "^KUBELET_EXTRA_ARGS="
+    state: present
+  when: k8s_ethernet_interface != "default"
+
+- name: Start and enable kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    state: started
+    enabled: true
+    daemon_reload: true

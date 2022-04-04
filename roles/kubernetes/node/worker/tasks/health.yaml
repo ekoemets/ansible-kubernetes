@@ -1,0 +1,11 @@
+---
+- name: Check that all kube-system pods for worker node are ready
+  ansible.builtin.shell: >
+    {{ kubectl }} wait
+    -n kube-system
+    --timeout 5m
+    --for condition=Ready
+    --field-selector spec.nodeName={{ ansible_hostname }}
+    pods
+  delegate_to: "{{ k8s_control_first_node }}"
+  changed_when: false

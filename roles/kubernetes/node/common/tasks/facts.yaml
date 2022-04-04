@@ -1,0 +1,53 @@
+---
+# Assertions
+- name: Assert that k8s_version is defined
+  ansible.builtin.assert:
+    that: k8s_version is defined
+    fail_msg: Variable 'k8s_version' has to be defined
+    quiet: true
+
+- name: Assert that k8s_control_first_node is defined
+  ansible.builtin.assert:
+    that: k8s_control_first_node is defined
+    fail_msg: Variable 'k8s_control_first_node' has to be defined
+    quiet: true
+
+# Facts gathering
+- name: Gather the package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Replace default with ansible ethernet interface name
+  ansible.builtin.set_fact:
+    k8s_ethernet_interface: "{{ ansible_facts['default_ipv4']['interface'] }}"
+  when: k8s_ethernet_interface == 'default'
+
+- name: Determine versions
+  block:
+    - name: Get kubeadm-config
+      ansible.builtin.shell: >
+        {{ kubectl }} get
+        -n kube-system
+        --ignore-not-found
+        -o jsonpath='{.data.ClusterConfiguration}'
+        configmap/kubeadm-config
+      changed_when: false
+      run_once: true
+      delegate_to: "{{ k8s_control_first_node }}"
+      register: cluster_kubeadm_config
+
+    - name: Get node info from cluster
+      ansible.builtin.shell: >
+        {{ kubectl }} get
+        -n kube-system
+        --ignore-not-found
+        -o yaml
+        node/{{ ansible_hostname }}
+      changed_when: false
+      delegate_to: "{{ k8s_control_first_node }}"
+      register: cluster_node
+
+    - name: Determine version for cluster and node
+      ansible.builtin.set_fact:
+        k8s_cluster_kubernetes_version: "{{ (cluster_kubeadm_config.stdout | from_yaml)['kubernetesVersion'] | regex_replace('v') | default('') }}"
+        k8s_cluster_node_version: "{{ (cluster_node.stdout | from_yaml)['status']['nodeInfo']['kubeletVersion'] | regex_replace('v') | default('') }}"

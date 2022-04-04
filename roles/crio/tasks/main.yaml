@@ -3,6 +3,9 @@
   ansible.builtin.template:
     src: "crio_kernel_modules.conf.j2"
     dest: "/etc/modules-load.d/crio.conf"
+    owner: root
+    group: root
+    mode: "644"
 
 - name: Load required kernel modules
   community.general.modprobe:
@@ -15,15 +18,15 @@
     name: "{{ item.name }}"
     value: "{{ item.value }}"
     sysctl_file: "/etc/sysctl.d/99-crio.conf"
-    reload: yes
+    reload: true
   with_items: "{{ crio_sysctl_variables }}"
 
 - name: Install CRI-O
-  include_tasks: install.yaml
+  ansible.builtin.include_tasks: install.yaml
 
 - name: Start and enable CRI-O
   ansible.builtin.systemd:
     name: "crio"
     state: started
-    enabled: yes
-    daemon_reload: yes
+    enabled: true
+    daemon_reload: true

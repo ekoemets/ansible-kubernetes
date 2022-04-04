@@ -1,26 +1,32 @@
 - name: Set distribution version
-  set_fact:
+  ansible.builtin.set_fact:
     centos_dist_name: CentOS_{{ ansible_distribution_major_version }}
 
+- name: Set CRI-O major version
+  ansible.builtin.set_fact:
+    crio_repo_version: "{{ crio_version | regex_search('([0-9]+.[0-9]+).*', '\\1') | first }}"
+
 - name: Add libcontainers repository
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: "devel:kubic:libcontainers:stable"
     description: "Libcontainers packages(stable)"
-    baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ centos_dist_name }}/
-    gpgcheck: yes
-    gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ centos_dist_name }}/repodata/repomd.xml.key
-    enabled: yes
+    baseurl: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ centos_dist_name }}/"
+    gpgcheck: true
+    gpgkey: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ centos_dist_name }}/repodata/repomd.xml.key"
+    enabled: true
 
 - name: Add CRI-O repository
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: "devel:kubic:libcontainers:stable:cri-o"
     description: "CRI-O"
-    baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ centos_dist_name }}/
-    gpgcheck: yes
-    gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ centos_dist_name }}/repodata/repomd.xml.key
-    enabled: yes
+    baseurl: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_repo_version }}/{{ centos_dist_name }}/"
+    gpgcheck: true
+    gpgkey:
+      "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/\
+      {{ crio_repo_version }}/{{ centos_dist_name }}/repodata/repomd.xml.key"
+    enabled: true
 
 - name: Install CRI-O
-  yum:
-    name: "cri-o"
+  ansible.builtin.dnf:
+    name: "cri-o-{{ crio_version }}"
     state: present

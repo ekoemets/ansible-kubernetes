@@ -1,29 +1,32 @@
 ---
 - name: Upload certificates
-  shell: >
+  ansible.builtin.shell: >
     {{ kubeadm }} init phase upload-certs --upload-certs
-  register: upload_certs_output
-  delegate_to: "{{ k8s_control_first_node }}"
+  changed_when: false
   run_once: true
+  delegate_to: "{{ k8s_control_first_node }}"
+  register: upload_certs_output
 
 - name: Create kubeadm join token
-  shell: >
+  ansible.builtin.shell: >
     {{ kubeadm }} token create --print-join-command
-  register: token_create_output
-  delegate_to: "{{ k8s_control_first_node }}"
+  changed_when: false
   run_once: true
+  delegate_to: "{{ k8s_control_first_node }}"
+  register: token_create_output
 
 - name: Parse options for joining control plane node
-  set_fact:
+  ansible.builtin.set_fact:
     token: "{{ token_create_output.stdout | regex_search('--token (.*?)(\\s|$)', '\\1') | first }}"
     discovery_token_ca_cert_hash: "{{ token_create_output.stdout | regex_search('--discovery-token-ca-cert-hash (.*?)(\\s|$)', '\\1') | first }}"
     certificate_key: "{{ upload_certs_output.stdout_lines | last }}"
 
 - name: Join control plane node to cluster
-  shell: >
+  ansible.builtin.shell: >
     {{ kubeadm }} join {{ k8s_control_plane_endpoint }}
-    --apiserver-advertise-address {{ hostvars[inventory_hostname].ansible_host }}
     --token {{ token }}
     --discovery-token-ca-cert-hash {{ discovery_token_ca_cert_hash }}
     --control-plane
     --certificate-key {{ certificate_key }}
+    --apiserver-advertise-address {{ ansible_facts[k8s_ethernet_interface]['ipv4']['address'] }}
+  changed_when: false

@@ -1,0 +1,14 @@
+---
+- name: Gather facts about cluster and node
+  ansible.builtin.include_tasks: facts.yaml
+
+- name: Include system configuration tasks
+  ansible.builtin.include_tasks: system.yaml
+
+- name: Include install tasks
+  ansible.builtin.include_tasks: install.yaml
+
+- name: Include upgrade tasks
+  ansible.builtin.include_tasks: upgrade.yaml
+  when: (k8s_cluster_kubernetes_version != '' and k8s_cluster_kubernetes_version != k8s_version)
+    or (k8s_cluster_node_version != '' and k8s_cluster_node_version != k8s_version)

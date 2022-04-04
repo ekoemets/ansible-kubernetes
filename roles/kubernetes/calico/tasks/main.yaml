@@ -1,31 +1,33 @@
 ---
 - name: Assert that Calico version is defined
-  assert:
+  ansible.builtin.assert:
     that: calico_version is defined
     fail_msg: Variable 'calico_version' has to be defined
-    quiet: yes
+    quiet: true
 
-- name: Get Calico Deployment image
-  shell: >
-    {{ kubectl }} -n kube-system get deployment/calico-kube-controllers 
+- name: Get deployed Calico Deployment image
+  ansible.builtin.shell: >
+    {{ kubectl }} -n kube-system get deployment/calico-kube-controllers
     --ignore-not-found
     -o jsonpath="{$.spec.template.spec.containers[0].image}"
+  changed_when: false
   register: calico_deployment
 
-- name: Get Calico DaemonSet image
-  shell: >
+- name: Get deployed Calico DaemonSet image
+  ansible.builtin.shell: >
     {{ kubectl }} -n kube-system get daemonset/calico-node
     --ignore-not-found
     -o jsonpath="{$.spec.template.spec.containers[0].image}"
+  changed_when: false
   register: calico_daemon_set
 
 - name: Determine Calico versions
-  set_fact:
-    calico_deployment_version: "{{ calico_deployment.stdout | regex_replace('.*?:')}}"
-    calico_daemon_set_version: "{{ calico_daemon_set.stdout | regex_replace('.*?:')}}"
+  ansible.builtin.set_fact:
+    calico_deployment_version: "{{ calico_deployment.stdout | regex_replace('.*?:v') }}"
+    calico_daemon_set_version: "{{ calico_daemon_set.stdout | regex_replace('.*?:v') }}"
 
 - name: Print current Calico resources versions
-  debug:
+  ansible.builtin.debug:
     msg:
       - "calico-kube-conrollers={{ calico_deployment_version }}"
       - "calico-node={{ calico_daemon_set_version }}"
@@ -33,22 +35,39 @@
 - name: Download and apply Calico manifest
   block:
     - name: Set Calico manifest location
-      set_fact:
+      ansible.builtin.set_fact:
         calico_manifest_file: /tmp/calico.yaml
 
     - name: Download Calico manifest
-      get_url:
-        url: https://projectcalico.docs.tigera.io/archive/{{ calico_version }}/manifests/calico.yaml
+      ansible.builtin.get_url:
+        url: https://projectcalico.docs.tigera.io/archive/v{{ calico_version }}/manifests/calico.yaml
         dest: "{{ calico_manifest_file }}"
         mode: "0440"
 
     - name: Apply Calico manifest
-      shell: >
+      ansible.builtin.shell: >
         {{ kubectl }} apply -f {{ calico_manifest_file }}
+      changed_when: false
 
     - name: Delete manifest file
-      file:
+      ansible.builtin.file:
         path: "{{ calico_manifest_file }}"
         state: absent
+
   when: (calico_deployment_version != calico_version) or (calico_daemon_set_version != calico_version)
-# TODO: Add checks to see if Calico is working correctly
+
+- name: Check Deployment calico-kube-controllers rollout status
+  ansible.builtin.shell: >
+    {{ kubectl }} rollout status
+    -n kube-system
+    --timeout=5m
+    deployment calico-kube-controllers
+  changed_when: false
+
+- name: Check DaemonSet calico-node rollout status
+  ansible.builtin.shell: >
+    {{ kubectl }} rollout status
+    -n kube-system
+    --timeout=10m
+    daemonset calico-node
+  changed_when: false

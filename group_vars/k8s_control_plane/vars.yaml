@@ -1,0 +1,10 @@
+# Install kubectl for control plane nodes
+k8s_install_kubectl: true
+
+# Kustomize configuration
+k8s_install_kustomize: true
+k8s_kustomize_version: "4.5.4"
+
+k8s_control_static_manifest_patches:
+  - name: "kube-apiserver01+merge.yaml"  # target[suffix][+patchtype].extension
+    path: "files/manifests/kube-apiserver01+merge.yaml"       # local path to patch

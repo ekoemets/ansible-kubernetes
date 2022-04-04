@@ -1,0 +1,56 @@
+---
+- name: Upgrade kubeadm
+  ansible.builtin.dnf:
+    name:
+      - "kubeadm-{{ k8s_version }}"
+    state: present
+    disable_excludes: kubernetes
+
+- name: Upgrade cluster on first control plane node
+  block:
+    - name: Get upgrade plan
+      ansible.builtin.shell: >
+        {{ kubeadm }} upgrade plan
+      changed_when: false
+      register: kubeadm_upgrade_plan
+
+    - name: Debug upgrade plan
+      ansible.builtin.debug:
+        var: kubeadm_upgrade_plan
+
+    - name: Upgrade cluster with kubeadm
+      ansible.builtin.shell: >
+        {{ kubeadm }} upgrade apply {{ k8s_version }}
+      changed_when: false
+  when: inventory_hostname == k8s_control_first_node
+
+- name: Upgrade cluster on secondary control plane node
+  ansible.builtin.shell: >
+    {{ kubeadm }} upgrade node
+  when: inventory_hostname != k8s_control_first_node
+
+- name: Drain node
+  ansible.builtin.shell: >
+    {{ kubectl }} drain {{ ansible_hostname }} --ignore-daemonsets
+  changed_when: false
+
+- name: Upgrade kubelet
+  ansible.builtin.dnf:
+    name:
+      - "kubelet-{{ k8s_version }}"
+    state: present
+    disable_excludes: kubernetes
+  notify:
+    - restart kubelet
+
+- name: Upgrade kubectl
+  ansible.builtin.dnf:
+    name:
+      - "kubectl-{{ k8s_version }}"
+    state: present
+    disable_excludes: kubernetes
+
+- name: Uncordon node
+  ansible.builtin.shell: >
+    {{ kubectl }} uncordon {{ ansible_hostname }}
+  changed_when: false

@@ -13,6 +13,7 @@
 - hosts: "k8s_control_init"
   become: true
   roles:
+    - role: centos
     - role: crio
     - role: kubernetes/node/common
     - role: kubernetes/node/control
@@ -22,6 +23,7 @@
   become: true
   serial: 1
   roles:
+    - role: centos
     - role: crio
     - role: kubernetes/node/common
     - role: kubernetes/node/control
@@ -30,6 +32,7 @@
   become: true
   serial: 1
   roles:
+    - role: centos
     - role: crio
     - role: kubernetes/node/common
     - role: kubernetes/node/worker

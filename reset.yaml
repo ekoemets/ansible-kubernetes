@@ -1,0 +1,14 @@
+---
+- hosts: k8s_node
+  become: true
+  tasks:
+    - name: Reset
+      ansible.builtin.shell: >
+        /usr/bin/kubeadm reset -f
+
+- hosts: k8s_control_plane
+  become: true
+  tasks:
+    - name: Reset
+      ansible.builtin.shell: >
+        /usr/bin/kubeadm reset -f

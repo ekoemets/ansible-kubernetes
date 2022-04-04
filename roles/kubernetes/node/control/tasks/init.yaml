@@ -1,12 +1,14 @@
 ---
 - name: Initalize cluster with kubeadm
-  shell: >
-    {{ kubeadm }} init 
+  ansible.builtin.shell: >
+    {{ kubeadm }} init
     --control-plane-endpoint {{ k8s_control_plane_endpoint }}
-    --apiserver-advertise-address {{ hostvars[inventory_hostname].ansible_host }}
-    {{ k8s_control_init_extra_options }}
+    --pod-network-cidr {{ k8s_pod_network_cidr }}
+    --apiserver-advertise-address {{ ansible_facts[k8s_ethernet_interface]['ipv4']['address'] }}
+    {{ k8s_init_extra_options }}
+  changed_when: false
   register: kubeadm_init_result
 
 - name: Debug init result
-  debug:
+  ansible.builtin.debug:
     var: kubeadm_init_result

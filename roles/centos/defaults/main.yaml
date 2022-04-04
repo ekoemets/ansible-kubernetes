@@ -1,0 +1,4 @@
+centos_firewall_enabled: true
+centos_swap_enabled: true
+
+centos_selinux_mode: "permissive"
