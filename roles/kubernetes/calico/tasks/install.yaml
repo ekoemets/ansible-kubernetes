@@ -2,6 +2,7 @@
 - name: Set calico manifest directory
   ansible.builtin.set_fact:
     calico_manifest_dir: "{{ k8s_conf_dir }}/applications/calico"
+    calico_patch_files: "{{ calico_merge_patches | map(attribute='name') }}"
 
 - name: Create manifest directory for calico
   ansible.builtin.file:
@@ -19,20 +20,45 @@
     group: root
     mode: '0644'
 
-- name: Copy patches for manifest
-  ansible.builtin.copy:
-    src: "{{ item.path }}"
-    dest: "{{ calico_manifest_dir }}/{{ item.name }}.yaml"
+- name: Create patches directory
+  ansible.builtin.file:
+    path: "{{ calico_manifest_dir  }}/patches"
+    state: directory
     owner: root
     group: root
-    mode: '0644'
+    mode: '0755'
+
+- name: Capture existing patch files
+  ansible.builtin.shell: >
+    ls -1 {{ calico_manifest_dir }}/patches
+  register: existing_patch_files
+  changed_when: false
+
+- name: Remove patches that are not listed
+  ansible.builtin.file:
+    path: "{{ calico_manifest_dir }}/patches/{{ item }}"
+    state: absent
+  with_items: "{{ existing_patch_files }}"
+  when: item not in calico_patch_files
+  register: patches_delete
+
+- name: Ensure wanted patches exist on node
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ calico_manifest_dir }}/patches/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0644"
   with_items: "{{ calico_merge_patches }}"
-  when: calico_merge_patches is defined
+  register: patches_update
 
 - name: Create kustomization file
   ansible.builtin.template:
     src: "kustomization.yaml.j2"
     dest: "{{ calico_manifest_dir }}/kustomization.yaml"
+    owner: root
+    group: root
+    mode: "0644"
 
 - name: Apply calico manifest
   ansible.builtin.shell: >

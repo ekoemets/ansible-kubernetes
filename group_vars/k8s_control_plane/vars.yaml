@@ -1,9 +1,9 @@
 calico_merge_patches:
-  - name: "calico-patch1"
+  - name: "calico-patch1.yaml"
     path: "files/calico/calico-patch1.yaml"
 
 nginx_merge_patches:
-  - name: "nginx-patch1"
+  - name: "nginx-patch1.yaml"
     path: "files/nginx/nginx-patch1.yaml"
 
 k8s_control_static_manifest_patches:

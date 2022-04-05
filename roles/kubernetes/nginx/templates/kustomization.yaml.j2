@@ -4,6 +4,6 @@ resources:
 {% if nginx_merge_patches is defined %}
 patchesStrategicMerge:
 {% for item in nginx_merge_patches %}
-  - {{ item.name }}.yaml
+  - ./patches/{{ item.name }}
 {% endfor %}
 {% endif %}
