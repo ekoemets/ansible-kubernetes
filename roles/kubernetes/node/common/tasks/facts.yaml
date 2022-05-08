@@ -34,7 +34,12 @@
       changed_when: false
       run_once: true
       delegate_to: "{{ k8s_control_first_node }}"
-      register: cluster_kubeadm_config
+      register: cluster_kubeadm
+      failed_when: false
+
+    - name: Determine version for cluster
+      ansible.builtin.set_fact:
+        k8s_cluster_kubernetes_version: "{{ (cluster_kubeadm.stdout | from_yaml)['kubernetesVersion'] | default('') | regex_replace('v') }}"
 
     - name: Get node info from cluster
       ansible.builtin.shell: >
@@ -46,8 +51,8 @@
       changed_when: false
       delegate_to: "{{ k8s_control_first_node }}"
       register: cluster_node
+      failed_when: false
 
-    - name: Determine version for cluster and node
+    - name: Determine version for node
       ansible.builtin.set_fact:
-        k8s_cluster_kubernetes_version: "{{ (cluster_kubeadm_config.stdout | from_yaml)['kubernetesVersion'] | regex_replace('v') | default('') }}"
-        k8s_cluster_node_version: "{{ (cluster_node.stdout | from_yaml)['status']['nodeInfo']['kubeletVersion'] | regex_replace('v') | default('') }}"
+        k8s_cluster_node_version: "{{ (cluster_node.stdout | from_yaml)['status']['nodeInfo']['kubeletVersion'] | default('') | regex_replace('v') }}"
