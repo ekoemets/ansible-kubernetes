@@ -10,5 +10,3 @@
 
 - name: Include upgrade tasks
   ansible.builtin.include_tasks: upgrade.yaml
-  when: (k8s_cluster_kubernetes_version != '' and k8s_cluster_kubernetes_version != k8s_version)
-    or (k8s_cluster_node_version != '' and k8s_cluster_node_version != k8s_version)

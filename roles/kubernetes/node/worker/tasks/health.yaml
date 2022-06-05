@@ -9,3 +9,7 @@
     pods
   delegate_to: "{{ k8s_control_first_node }}"
   changed_when: false
+  register: health_check_result
+  retries: 3
+  delay: 5
+  until: health_check_result is not failed

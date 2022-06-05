@@ -38,7 +38,7 @@
   ansible.builtin.file:
     path: "{{ nginx_manifest_dir }}/patches/{{ item }}"
     state: absent
-  with_items: "{{ existing_patch_files }}"
+  with_items: "{{ existing_patch_files.stdout_lines }}"
   when: item not in nginx_patch_files
   register: patches_delete
 

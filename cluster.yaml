@@ -1,6 +1,9 @@
 ---
 - hosts: localhost
   tasks:
+    - include_vars:
+        dir: group_vars/k8s_cluster
+
     - ansible.builtin.add_host:
         name: "{{ k8s_control_first_node }}"
         groups: k8s_control_init
@@ -10,6 +13,7 @@
         group: k8s_control_join
       with_items: "{{ groups['k8s_control_plane'] | reject('==', k8s_control_first_node) | list }}"
 
+# Deploy first control node and networking
 - hosts: "k8s_control_init"
   become: true
   roles:
@@ -18,8 +22,8 @@
     - role: kubernetes/node/common
     - role: kubernetes/node/control
     - role: kubernetes/calico
-    - role: kubernetes/nginx
 
+# Deploy additional control nodes
 - hosts: k8s_control_join
   become: true
   serial: 1
@@ -29,6 +33,7 @@
     - role: kubernetes/node/common
     - role: kubernetes/node/control
 
+# Deploy worker nodes
 - hosts: k8s_node
   become: true
   serial: 1
@@ -37,3 +42,11 @@
     - role: crio
     - role: kubernetes/node/common
     - role: kubernetes/node/worker
+
+# Deploy applications
+- hosts: k8s_control_init
+  become: true
+  vars_files:
+    - roles/kubernetes/node/common/defaults/main.yaml
+  roles:
+    - role: kubernetes/nginx

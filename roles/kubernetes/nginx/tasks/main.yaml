@@ -18,7 +18,8 @@
 
 - name: Wait for nginx controller to be ready
   ansible.builtin.shell: >
-    {{ kubectl }} wait --namespace ingress-nginx
+    {{ kubectl }} wait
+    --namespace ingress-nginx
     --for=condition=ready pod
     --selector=app.kubernetes.io/component=controller
     --timeout=120s
